@@ -163,7 +163,6 @@
   const pendingMessages = [];
   const uiState = loadUiState();
   const sharedState = normalizeSharedState(loadSharedCache());
-  ensureKnownTasks();
 
   function sanitizeName(name) {
     if (typeof name !== "string") return "";
@@ -340,6 +339,7 @@
   }
 
   const taskDefMap = getTaskDefMap();
+  ensureKnownTasks();
 
   function ensureKnownTasks() {
     Object.keys(taskDefMap).forEach((id) => {
