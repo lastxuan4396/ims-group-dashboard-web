@@ -1,6 +1,7 @@
 (() => {
   const UI_STORAGE_KEY = "ims-dashboard-ui-v2";
   const CACHE_STORAGE_KEY = "ims-dashboard-cache-v2";
+  const ADD_MEMBER_VALUE = "__add_member__";
 
   const STATUS_LABELS = {
     todo: "未开始",
@@ -577,6 +578,29 @@
     const memberInput = document.getElementById("memberInput");
 
     currentMemberSelect.addEventListener("change", () => {
+      if (currentMemberSelect.value === ADD_MEMBER_VALUE) {
+        const quickName = prompt("请输入成员名字（最多40字）");
+        if (quickName !== null) {
+          const name = sanitizeName(quickName);
+          if (!name) {
+            alert("成员名字不能为空。");
+          } else {
+            if (!sharedState.members.includes(name)) {
+              addMemberLocal(name);
+              emitSocket("state:patch", {
+                type: "member_add",
+                member: name,
+                actor: getActor()
+              });
+            }
+            uiState.currentMember = name;
+            saveUiState();
+          }
+        }
+        syncAllUiFromState();
+        return;
+      }
+
       uiState.currentMember = sanitizeName(currentMemberSelect.value);
       saveUiState();
       refreshAssigneeFilterOptions();
@@ -797,6 +821,11 @@
     blank.textContent = "未设置";
     select.appendChild(blank);
 
+    const quickAdd = document.createElement("option");
+    quickAdd.value = ADD_MEMBER_VALUE;
+    quickAdd.textContent = "＋添加成员...";
+    select.appendChild(quickAdd);
+
     sharedState.members.forEach((member) => {
       const option = document.createElement("option");
       option.value = member;
@@ -938,7 +967,20 @@
   function applyTaskFilters() {
     const filter = uiState.assigneeFilter;
     const myName = uiState.currentMember;
+    let dueWeekOnly = uiState.dueWeekOnly;
     let effectiveFilter = filter;
+
+    if (dueWeekOnly) {
+      const hasAnyDueDate = Object.values(sharedState.tasks || {}).some((task) =>
+        Boolean(sanitizeDueDate(task && task.dueDate))
+      );
+      if (!hasAnyDueDate) {
+        dueWeekOnly = false;
+        uiState.dueWeekOnly = false;
+        saveUiState();
+        syncHideDone();
+      }
+    }
 
     if (effectiveFilter === "me" && !myName) {
       effectiveFilter = "all";
@@ -970,7 +1012,7 @@
         visible = visible && assignee === target;
       }
 
-      if (uiState.dueWeekOnly) {
+      if (dueWeekOnly) {
         visible = visible && isDateInCurrentWeek(due);
       }
 
