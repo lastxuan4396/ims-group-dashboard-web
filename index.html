@@ -60,6 +60,22 @@
       justify-content: space-between;
     }
 
+    .sync-pill {
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      border: 1px solid #ccddd5;
+      background: #ecf5f0;
+      color: #1f5844;
+      font-weight: 700;
+    }
+
+    .sync-pill.offline {
+      border-color: #edc9c3;
+      background: #fff1ef;
+      color: #90372e;
+    }
+
     .metric {
       display: flex;
       align-items: baseline;
@@ -296,14 +312,15 @@
     }
 
     .task {
-      display: flex;
-      align-items: flex-start;
+      display: grid;
+      grid-template-columns: 1fr 130px;
       gap: 8px;
       font-size: 0.9rem;
       color: #253a2f;
+      align-items: center;
     }
 
-    .task input {
+    .task input[type="checkbox"] {
       margin-top: 2px;
       width: 16px;
       height: 16px;
@@ -312,9 +329,37 @@
       flex-shrink: 0;
     }
 
-    .task.done span {
+    .task-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .task-label {
+      display: inline-block;
+      min-width: 0;
+    }
+
+    .task.done .task-label {
       text-decoration: line-through;
       color: #6e8576;
+    }
+
+    .assignee-input {
+      border: 1px solid #cfddd2;
+      border-radius: 10px;
+      font-size: 0.84rem;
+      padding: 5px 8px;
+      color: #1e3329;
+      background: #fcfefb;
+      outline: none;
+      width: 100%;
+    }
+
+    .assignee-input:focus {
+      border-color: #8bc7b0;
+      box-shadow: 0 0 0 2px rgba(41, 152, 123, 0.14);
     }
 
     .side-grid {
@@ -528,11 +573,16 @@
       .bar-wrap {
         width: 180px;
       }
+
+      .task {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
   <header class="topbar">
+    <div class="sync-pill" id="syncStatus">同步中...</div>
     <div class="metric">
       <strong id="doneCount">0</strong>
       <span> / <span id="totalCount">0</span> 已完成</span>
@@ -708,9 +758,11 @@
       </section>
     </section>
   </main>
-
+  <datalist id="memberNames"></datalist>
+  <script src="/socket.io/socket.io.js"></script>
   <script>
-    const STORAGE_KEY = "ims-dashboard-v1";
+    const UI_STORAGE_KEY = "ims-dashboard-ui-v1";
+    const CACHE_STORAGE_KEY = "ims-dashboard-cache-v1";
 
     const steps = [
       {
@@ -855,26 +907,121 @@
       "三国并行分散：统一模板，国家差异参数化"
     ];
 
-    const state = loadState();
+    const sharedState = loadSharedCache();
+    const uiState = loadUiState();
+    let socket = null;
+    let pendingReplace = null;
+    let pendingPatchMap = {};
 
-    function loadState() {
+    function loadUiState() {
       try {
-        const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        const data = JSON.parse(localStorage.getItem(UI_STORAGE_KEY) || "{}");
         return {
-          checked: data.checked || {},
-          hideDone: data.hideDone || false
+          hideDone: Boolean(data.hideDone)
         };
       } catch {
-        return { checked: {}, hideDone: false };
+        return { hideDone: false };
       }
     }
 
-    function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    function saveUiState() {
+      localStorage.setItem(UI_STORAGE_KEY, JSON.stringify(uiState));
+    }
+
+    function normalizeState(raw) {
+      const clean = {
+        checked: {},
+        assignees: {}
+      };
+
+      if (raw && typeof raw === "object") {
+        if (raw.checked && typeof raw.checked === "object") {
+          Object.entries(raw.checked).forEach(([key, value]) => {
+            if (value === true) clean.checked[key] = true;
+          });
+        }
+        if (raw.assignees && typeof raw.assignees === "object") {
+          Object.entries(raw.assignees).forEach(([key, value]) => {
+            const name = sanitizeAssignee(value);
+            if (name) clean.assignees[key] = name;
+          });
+        }
+      }
+      return clean;
+    }
+
+    function loadSharedCache() {
+      try {
+        const data = JSON.parse(localStorage.getItem(CACHE_STORAGE_KEY) || "{}");
+        return normalizeState(data);
+      } catch {
+        return { checked: {}, assignees: {} };
+      }
+    }
+
+    function saveSharedCache() {
+      localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(sharedState));
+    }
+
+    function sanitizeAssignee(name) {
+      if (typeof name !== "string") return "";
+      const cleaned = name.trim().replace(/\s+/g, " ");
+      return cleaned.slice(0, 40);
     }
 
     function taskId(groupId, idx) {
       return `${groupId}-t${idx + 1}`;
+    }
+
+    function setSyncStatus(online, text) {
+      const box = document.getElementById("syncStatus");
+      box.textContent = text;
+      box.classList.toggle("offline", !online);
+    }
+
+    function cloneSharedState() {
+      return {
+        checked: { ...sharedState.checked },
+        assignees: { ...sharedState.assignees }
+      };
+    }
+
+    function queuePatch(patch) {
+      if (!patch || !patch.taskId) return;
+      const prev = pendingPatchMap[patch.taskId] || {};
+      pendingPatchMap[patch.taskId] = { ...prev, ...patch };
+    }
+
+    function emitPatch(patch) {
+      if (socket && socket.connected) {
+        socket.emit("state:patch", patch);
+        return;
+      }
+      queuePatch(patch);
+      setSyncStatus(false, "离线（本地暂存）");
+    }
+
+    function emitReplace() {
+      const payload = cloneSharedState();
+      if (socket && socket.connected) {
+        socket.emit("state:replace", payload);
+        return;
+      }
+      pendingReplace = payload;
+      pendingPatchMap = {};
+      setSyncStatus(false, "离线（本地暂存）");
+    }
+
+    function flushPending() {
+      if (!socket || !socket.connected) return;
+      if (pendingReplace) {
+        socket.emit("state:replace", pendingReplace);
+        pendingReplace = null;
+        pendingPatchMap = {};
+        return;
+      }
+      Object.values(pendingPatchMap).forEach((patch) => socket.emit("state:patch", patch));
+      pendingPatchMap = {};
     }
 
     function render() {
@@ -884,6 +1031,62 @@
       bindTopButtons();
       syncHideDone();
       updateProgress();
+      updateNameOptions();
+      connectRealtime();
+    }
+
+    function createTaskRow(id, text, stepId = "") {
+      const row = document.createElement("label");
+      row.className = "task";
+      row.dataset.taskId = id;
+      row.dataset.stepId = stepId;
+
+      const main = document.createElement("div");
+      main.className = "task-main";
+
+      const check = document.createElement("input");
+      check.type = "checkbox";
+      check.checked = Boolean(sharedState.checked[id]);
+      check.addEventListener("change", () => {
+        handleCheckChange(id, check.checked, stepId);
+      });
+
+      const label = document.createElement("span");
+      label.className = "task-label";
+      label.textContent = text;
+
+      const assignee = document.createElement("input");
+      assignee.type = "text";
+      assignee.className = "assignee-input";
+      assignee.setAttribute("list", "memberNames");
+      assignee.placeholder = "负责人";
+      assignee.value = sharedState.assignees[id] || "";
+      assignee.addEventListener("change", () => {
+        handleAssigneeChange(id, assignee.value);
+      });
+      assignee.addEventListener("blur", () => {
+        const cleaned = sanitizeAssignee(assignee.value);
+        if (cleaned !== assignee.value) {
+          assignee.value = cleaned;
+        }
+      });
+
+      main.appendChild(check);
+      main.appendChild(label);
+      row.appendChild(main);
+      row.appendChild(assignee);
+      return row;
+    }
+
+    function handleCheckChange(id, checked, stepId) {
+      applyPatchLocally({ taskId: id, checked }, stepId);
+      emitPatch({ taskId: id, checked });
+    }
+
+    function handleAssigneeChange(id, name) {
+      const cleaned = sanitizeAssignee(name);
+      applyPatchLocally({ taskId: id, assignee: cleaned });
+      emitPatch({ taskId: id, assignee: cleaned || null });
     }
 
     function renderSteps() {
@@ -914,19 +1117,7 @@
 
         step.tasks.forEach((text, idx) => {
           const id = taskId(step.id, idx);
-          const row = document.createElement("label");
-          row.className = "task";
-          row.dataset.taskId = id;
-          row.innerHTML = `
-            <input type="checkbox" ${state.checked[id] ? "checked" : ""} />
-            <span>${text}</span>
-          `;
-          const input = row.querySelector("input");
-          input.addEventListener("change", () => {
-            state.checked[id] = input.checked;
-            saveState();
-            updateProgress(step.id);
-          });
+          const row = createTaskRow(id, text, step.id);
           list.appendChild(row);
         });
 
@@ -957,19 +1148,7 @@
 
         phase.tasks.forEach((text, idx) => {
           const id = taskId(phase.id, idx);
-          const row = document.createElement("label");
-          row.className = "task";
-          row.dataset.taskId = id;
-          row.innerHTML = `
-            <input type="checkbox" ${state.checked[id] ? "checked" : ""} />
-            <span>${text}</span>
-          `;
-          const input = row.querySelector("input");
-          input.addEventListener("change", () => {
-            state.checked[id] = input.checked;
-            saveState();
-            updateProgress();
-          });
+          const row = createTaskRow(id, text);
           list.appendChild(row);
         });
 
@@ -985,18 +1164,7 @@
       list.innerHTML = "";
       riskItems.forEach((text, idx) => {
         const id = taskId("risk", idx);
-        const row = document.createElement("label");
-        row.className = "task";
-        row.dataset.taskId = id;
-        row.innerHTML = `
-          <input type="checkbox" ${state.checked[id] ? "checked" : ""} />
-          <span>${text}</span>
-        `;
-        row.querySelector("input").addEventListener("change", (e) => {
-          state.checked[id] = e.target.checked;
-          saveState();
-          updateProgress();
-        });
+        const row = createTaskRow(id, text);
         list.appendChild(row);
       });
     }
@@ -1007,8 +1175,8 @@
       const resetBtn = document.getElementById("resetBtn");
 
       toggleBtn.onclick = () => {
-        state.hideDone = !state.hideDone;
-        saveState();
+        uiState.hideDone = !uiState.hideDone;
+        saveUiState();
         syncHideDone();
       };
 
@@ -1016,16 +1184,18 @@
 
       resetBtn.onclick = () => {
         if (!confirm("确认清空所有勾选状态吗？")) return;
-        state.checked = {};
-        saveState();
-        render();
+        sharedState.checked = {};
+        saveSharedCache();
+        syncTaskNodesFromState();
+        updateProgress();
+        emitReplace();
       };
     }
 
     function syncHideDone() {
       const root = document.getElementById("pageRoot");
       const btn = document.getElementById("toggleDoneBtn");
-      if (state.hideDone) {
+      if (uiState.hideDone) {
         root.classList.add("hidden-done");
         btn.textContent = "显示全部";
       } else {
@@ -1043,7 +1213,7 @@
       const total = allTasks.length;
       let done = 0;
       allTasks.forEach((node) => {
-        const input = node.querySelector("input");
+        const input = node.querySelector("input[type='checkbox']");
         const isDone = input.checked;
         node.classList.toggle("done", isDone);
         if (isDone) done += 1;
@@ -1058,7 +1228,7 @@
       let doneSteps = 0;
       steps.forEach((step) => {
         const ids = step.tasks.map((_, idx) => taskId(step.id, idx));
-        const hit = ids.filter((id) => state.checked[id]).length;
+        const hit = ids.filter((id) => sharedState.checked[id]).length;
         const stepPercent = Math.round((hit / ids.length) * 100);
         const mini = document.getElementById(`mini-${step.id}`);
         if (mini) mini.style.width = `${stepPercent}%`;
@@ -1080,12 +1250,12 @@
       document.getElementById("doneSteps").textContent = `${doneSteps} / ${steps.length}`;
 
       const sprintIds = sprintPhases.flatMap((phase) => phase.tasks.map((_, idx) => taskId(phase.id, idx)));
-      const sprintDone = sprintIds.filter((id) => state.checked[id]).length;
+      const sprintDone = sprintIds.filter((id) => sharedState.checked[id]).length;
       const sprintPercent = Math.round((sprintDone / sprintIds.length) * 100);
       document.getElementById("sprintPercent").textContent = `${sprintPercent}%`;
 
       const countryKeys = ["s2-t2", "s2-t3", "s3-t1", "s3-t2", "s3-t3"];
-      const countryDone = countryKeys.filter((id) => state.checked[id]).length;
+      const countryDone = countryKeys.filter((id) => sharedState.checked[id]).length;
       const countryReady = Math.round((countryDone / countryKeys.length) * 100);
       document.getElementById("countryReady").textContent = `${countryReady}%`;
 
@@ -1119,7 +1289,7 @@
         });
       });
 
-      const next = orderedTasks.find((task) => !state.checked[task.id]);
+      const next = orderedTasks.find((task) => !sharedState.checked[task.id]);
       if (!next) {
         nextTitle.textContent = "全部任务已完成";
         nextBody.textContent = "可以开始把最终版本转成展示稿，并准备答辩分工。";
@@ -1155,7 +1325,11 @@
       lines.push("");
       lines.push("## 已完成");
 
-      const doneTasks = Array.from(document.querySelectorAll(".task.done span")).map((el) => el.textContent.trim());
+      const doneTasks = Array.from(document.querySelectorAll(".task.done")).map((row) => {
+        const text = row.querySelector(".task-label")?.textContent.trim() || "";
+        const owner = sanitizeAssignee(row.querySelector(".assignee-input")?.value || "");
+        return owner ? `${text}（负责人：${owner}）` : text;
+      }).filter(Boolean);
       if (doneTasks.length === 0) {
         lines.push("- （暂无）");
       } else {
@@ -1164,7 +1338,11 @@
 
       lines.push("");
       lines.push("## 下周优先");
-      const nextTasks = Array.from(document.querySelectorAll(".task:not(.done) span")).slice(0, 5).map((el) => el.textContent.trim());
+      const nextTasks = Array.from(document.querySelectorAll(".task:not(.done)")).slice(0, 5).map((row) => {
+        const text = row.querySelector(".task-label")?.textContent.trim() || "";
+        const owner = sanitizeAssignee(row.querySelector(".assignee-input")?.value || "");
+        return owner ? `${text}（负责人：${owner}）` : text;
+      }).filter(Boolean);
       if (nextTasks.length === 0) {
         lines.push("- 进入答辩与展示准备");
       } else {
@@ -1176,6 +1354,95 @@
         alert("本周进展已复制到剪贴板，可直接发到群里。");
       }).catch(() => {
         prompt("复制下面的进展文本：", text);
+      });
+    }
+
+    function updateNameOptions() {
+      const datalist = document.getElementById("memberNames");
+      const names = new Set();
+      Object.values(sharedState.assignees).forEach((name) => {
+        if (name) names.add(name);
+      });
+      const sorted = Array.from(names).sort((a, b) => a.localeCompare(b, "zh-CN"));
+      datalist.innerHTML = sorted.map((name) => `<option value="${name}"></option>`).join("");
+    }
+
+    function syncTaskNodesFromState() {
+      document.querySelectorAll(".task").forEach((row) => {
+        const id = row.dataset.taskId;
+        const check = row.querySelector("input[type='checkbox']");
+        const assignee = row.querySelector(".assignee-input");
+        if (check) check.checked = Boolean(sharedState.checked[id]);
+        if (assignee) assignee.value = sharedState.assignees[id] || "";
+      });
+      updateNameOptions();
+    }
+
+    function applyPatchLocally(patch, stepId = null) {
+      if (!patch || typeof patch.taskId !== "string") return;
+      const { taskId: id } = patch;
+      if ("checked" in patch) {
+        if (patch.checked === true) sharedState.checked[id] = true;
+        else delete sharedState.checked[id];
+      }
+      if ("assignee" in patch) {
+        const cleaned = sanitizeAssignee(patch.assignee || "");
+        if (cleaned) sharedState.assignees[id] = cleaned;
+        else delete sharedState.assignees[id];
+      }
+      saveSharedCache();
+      syncTaskNodesFromState();
+      updateProgress(stepId);
+    }
+
+    function replaceSharedState(nextState) {
+      const normalized = normalizeState(nextState);
+      sharedState.checked = normalized.checked;
+      sharedState.assignees = normalized.assignees;
+      saveSharedCache();
+      syncTaskNodesFromState();
+      updateProgress();
+    }
+
+    function connectRealtime() {
+      if (typeof io !== "function") {
+        setSyncStatus(false, "同步不可用");
+        return;
+      }
+
+      socket = io({
+        transports: ["websocket", "polling"]
+      });
+
+      socket.on("connect", () => {
+        setSyncStatus(true, "实时同步在线");
+        socket.emit("state:request");
+        flushPending();
+      });
+
+      socket.on("disconnect", () => {
+        setSyncStatus(false, "离线（本地模式）");
+      });
+
+      socket.on("connect_error", () => {
+        setSyncStatus(false, "连接失败");
+      });
+
+      socket.on("state:init", (payload) => {
+        if (payload && payload.state) {
+          replaceSharedState(payload.state);
+          flushPending();
+        }
+      });
+
+      socket.on("state:patch", (patch) => {
+        applyPatchLocally(patch);
+      });
+
+      socket.on("state:replace", (payload) => {
+        if (payload && payload.state) {
+          replaceSharedState(payload.state);
+        }
       });
     }
 

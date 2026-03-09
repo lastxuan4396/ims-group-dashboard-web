@@ -1,7 +1,10 @@
 services:
-  - type: static
-    name: ims-group-dashboard
-    env: static
+  - type: web
+    name: ims-group-dashboard-web
+    runtime: node
     plan: free
-    buildCommand: ""
-    staticPublishPath: .
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
