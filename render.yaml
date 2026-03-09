@@ -1,0 +1,7 @@
+services:
+  - type: static
+    name: ims-group-dashboard
+    env: static
+    plan: free
+    buildCommand: ""
+    staticPublishPath: .

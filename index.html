@@ -1,0 +1,1185 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMS 小组项目作战面板</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-1: #f5f7f2;
+      --bg-2: #edf1e5;
+      --ink: #0f1a12;
+      --ink-soft: #304438;
+      --card: #ffffff;
+      --line: #d4decc;
+      --accent: #147a63;
+      --accent-2: #f38f3a;
+      --danger: #b33b2f;
+      --ok: #19753a;
+      --shadow: 0 16px 42px rgba(19, 43, 29, 0.12);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Noto Sans SC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 540px at 88% -12%, rgba(20, 122, 99, 0.16), transparent 70%),
+        radial-gradient(900px 460px at -10% 25%, rgba(243, 143, 58, 0.16), transparent 72%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      min-height: 100vh;
+      line-height: 1.55;
+      padding: 24px 14px 80px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 12px;
+      z-index: 20;
+      max-width: 1240px;
+      margin: 0 auto 18px;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.86);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 26px rgba(22, 33, 24, 0.12);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      justify-content: space-between;
+    }
+
+    .metric {
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+
+    .metric strong {
+      font-family: "Outfit", sans-serif;
+      font-size: 22px;
+      color: var(--ink);
+      letter-spacing: 0.2px;
+    }
+
+    .bar-wrap {
+      width: 240px;
+      height: 9px;
+      border-radius: 999px;
+      background: #dde5d8;
+      overflow: hidden;
+      border: 1px solid #d0dcc9;
+    }
+
+    .bar {
+      width: 0;
+      height: 100%;
+      transition: width 0.45s ease;
+      background: linear-gradient(90deg, var(--accent), #2da98a);
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      font-family: "Noto Sans SC", sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 9px 14px;
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(20, 45, 34, 0.15);
+    }
+
+    .btn-main {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-lite {
+      background: #ebf3ee;
+      color: #1f3d2f;
+      border: 1px solid #cfddd4;
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero {
+      border-radius: calc(var(--radius) + 2px);
+      padding: 22px;
+      color: #f7fff8;
+      background:
+        linear-gradient(124deg, rgba(10, 66, 53, 0.95), rgba(20, 122, 99, 0.89)),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06) 12px, transparent 12px, transparent 26px);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .hero h1 {
+      font-family: "Outfit", sans-serif;
+      letter-spacing: 0.4px;
+      line-height: 1.08;
+      margin-bottom: 8px;
+      font-size: clamp(1.8rem, 4vw, 2.66rem);
+    }
+
+    .hero p {
+      max-width: 950px;
+      opacity: 0.94;
+      font-size: 0.98rem;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .hero-card {
+      grid-column: span 4;
+      border-radius: 14px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .hero-card h3 {
+      font-family: "Outfit", sans-serif;
+      font-size: 1.08rem;
+      margin-bottom: 7px;
+    }
+
+    .hero-card strong {
+      color: #ffe9d0;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #fcfdfb, #f6faf4);
+    }
+
+    .panel-head h2 {
+      font-family: "Outfit", sans-serif;
+      font-size: 1.18rem;
+      letter-spacing: 0.25px;
+    }
+
+    .panel-body {
+      padding: 14px;
+    }
+
+    .hint {
+      color: var(--ink-soft);
+      font-size: 0.91rem;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+      gap: 12px;
+    }
+
+    .step-card {
+      border: 1px solid #d2ded1;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #fff, #f7faf6);
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+      transition: transform 0.18s ease, border-color 0.2s ease;
+    }
+
+    .step-card:hover {
+      transform: translateY(-2px);
+      border-color: #9dcbbd;
+    }
+
+    .step-card.done {
+      border-color: #79bf9f;
+      background: linear-gradient(180deg, #fbfffd, #f1fbf6);
+    }
+
+    .step-title {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .badge {
+      font-family: "Outfit", sans-serif;
+      font-size: 0.8rem;
+      background: #e8f2ed;
+      border: 1px solid #cbe0d6;
+      color: #1a5a45;
+      border-radius: 999px;
+      padding: 2px 8px;
+      line-height: 1.45;
+      white-space: nowrap;
+    }
+
+    .step-title h3 {
+      font-size: 1rem;
+      line-height: 1.35;
+    }
+
+    .step-info {
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+    }
+
+    .mini-progress {
+      margin-top: 3px;
+      height: 7px;
+      background: #dfe7dc;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .mini-progress span {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #1e8b6f, #4eb998);
+      transition: width 0.28s ease;
+    }
+
+    .task-list {
+      display: grid;
+      gap: 7px;
+      margin-top: 4px;
+    }
+
+    .task {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: #253a2f;
+    }
+
+    .task input {
+      margin-top: 2px;
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .task.done span {
+      text-decoration: line-through;
+      color: #6e8576;
+    }
+
+    .side-grid {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .next-action {
+      border: 1px solid #d7e6da;
+      border-radius: 14px;
+      padding: 13px;
+      background: linear-gradient(180deg, #ffffff, #f2faf6);
+    }
+
+    .next-action h3 {
+      font-family: "Outfit", sans-serif;
+      margin-bottom: 6px;
+      font-size: 1rem;
+    }
+
+    .next-action p {
+      font-size: 0.92rem;
+      color: #2b4136;
+    }
+
+    .kpi {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .kpi-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 9px;
+      border-radius: 10px;
+      border: 1px solid #d8e4d6;
+      background: #fcfefa;
+      font-size: 0.9rem;
+    }
+
+    .kpi-item strong {
+      font-family: "Outfit", sans-serif;
+      font-size: 1.02rem;
+    }
+
+    .milestone {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      border: 1px solid #dce7d6;
+      background: #f6faf4;
+    }
+
+    .milestone.good {
+      border-color: #b8dbca;
+      background: #ebf8f0;
+      color: #1f5e46;
+    }
+
+    .milestone.warn {
+      border-color: #eed9bf;
+      background: #fff7eb;
+      color: #7f5320;
+    }
+
+    .milestone.risk {
+      border-color: #e6c2bc;
+      background: #fff0ee;
+      color: #8f362d;
+    }
+
+    .roadmap {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .phase {
+      border: 1px solid #d6e4d4;
+      border-radius: 12px;
+      padding: 11px;
+      background: #fbfef9;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .phase::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 36%;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, rgba(22, 125, 103, 0.55));
+    }
+
+    .phase h3 {
+      font-family: "Outfit", sans-serif;
+      font-size: 1rem;
+      margin-bottom: 5px;
+      color: #154f3c;
+    }
+
+    .phase p {
+      font-size: 0.88rem;
+      color: #3a5044;
+      margin-bottom: 8px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid #d8e3d3;
+      border-radius: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      min-width: 640px;
+      background: #fff;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #e1e8de;
+      border-right: 1px solid #e1e8de;
+      padding: 8px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th:last-child,
+    td:last-child {
+      border-right: 0;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    thead th {
+      background: #f1f7f1;
+      color: #20362d;
+      font-family: "Outfit", sans-serif;
+      font-size: 0.87rem;
+      letter-spacing: 0.2px;
+    }
+
+    .tag {
+      display: inline-block;
+      border: 1px solid #d2dfd5;
+      background: #f5faf6;
+      border-radius: 999px;
+      padding: 1px 8px;
+      font-size: 0.78rem;
+      color: #305344;
+      margin-right: 6px;
+      margin-top: 4px;
+    }
+
+    .footer-note {
+      font-size: 0.85rem;
+      color: #496157;
+      margin-top: 8px;
+    }
+
+    .hidden-done .task.done,
+    .hidden-done .step-card.done {
+      display: none;
+    }
+
+    .flash {
+      animation: popFlash 0.85s ease;
+    }
+
+    @keyframes popFlash {
+      0% {
+        transform: scale(1);
+      }
+      30% {
+        transform: scale(1.024);
+        box-shadow: 0 0 0 3px rgba(45, 169, 138, 0.35);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-card {
+        grid-column: auto;
+      }
+
+      .roadmap {
+        grid-template-columns: 1fr;
+      }
+
+      .bar-wrap {
+        width: 180px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="metric">
+      <strong id="doneCount">0</strong>
+      <span> / <span id="totalCount">0</span> 已完成</span>
+    </div>
+    <div class="bar-wrap" aria-label="项目总进度">
+      <div class="bar" id="overallBar"></div>
+    </div>
+    <div class="metric">
+      <strong id="overallPercent">0%</strong>
+      <span>总进度</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn-lite" id="toggleDoneBtn">只看未完成</button>
+      <button class="btn-main" id="exportBtn">导出本周进展</button>
+      <button class="btn-lite" id="resetBtn">重置勾选</button>
+    </div>
+  </header>
+
+  <main class="page" id="pageRoot">
+    <section class="hero">
+      <h1>IMS 小组项目作战面板</h1>
+      <p>核心目标：把“写报告”变成“推进项目”。页面内容已按你文档的九步流程和关键产出物重构，确保每次开会都能立刻看到下一步、责任点和完成度。</p>
+      <div class="hero-grid">
+        <article class="hero-card">
+          <h3>项目主线</h3>
+          <p>从 <strong>Step 1 问题定义</strong> 到 <strong>Step 9 实施建议</strong>，按固定顺序推进，避免返工。</p>
+        </article>
+        <article class="hero-card">
+          <h3>优先市场</h3>
+          <p><strong>Germany / Romania / Poland</strong> 同优先级 Top-tier；Spain 与 Baltics 做后置验证。</p>
+        </article>
+        <article class="hero-card">
+          <h3>执行节奏</h3>
+          <p>按 <strong>90 天冲刺</strong>：Build（1-30天）→ Pilot（31-60天）→ Scale（61-90天）。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>九步任务总览（可勾选）</h2>
+          <span class="hint">每个 Step 会自动计算完成度与状态</span>
+        </div>
+        <div class="panel-body">
+          <div class="steps" id="stepsContainer"></div>
+        </div>
+      </div>
+
+      <aside class="side-grid">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>下一步动作</h2>
+          </div>
+          <div class="panel-body">
+            <article class="next-action">
+              <h3 id="nextActionTitle">待生成</h3>
+              <p id="nextActionBody">先勾选至少一项任务，系统会给出最小可执行下一步。</p>
+            </article>
+            <div class="kpi">
+              <div class="kpi-item"><span>完成 Step 数</span><strong id="doneSteps">0 / 9</strong></div>
+              <div class="kpi-item"><span>90天冲刺完成率</span><strong id="sprintPercent">0%</strong></div>
+              <div class="kpi-item"><span>Top-tier 国家就绪度</span><strong id="countryReady">0%</strong></div>
+            </div>
+            <div class="milestone" id="milestoneBox">里程碑状态待更新</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>执行原则</h2>
+          </div>
+          <div class="panel-body">
+            <div class="tag">Deliverable-led</div>
+            <div class="tag">Audit trail</div>
+            <div class="tag">Top-tier focus</div>
+            <div class="tag">Template-first</div>
+            <p class="footer-note">先做可交付服务包，再做平台增强。避免“先做大而空系统”。</p>
+          </div>
+        </section>
+      </aside>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>90天冲刺（Step 6 提炼）</h2>
+      </div>
+      <div class="panel-body">
+        <div class="roadmap" id="sprintContainer"></div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>五国筛选结果（来自 STEP 2-3）</h2>
+        </div>
+        <div class="panel-body">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>国家</th>
+                  <th>市场</th>
+                  <th>增长</th>
+                  <th>收益机制</th>
+                  <th>复杂度</th>
+                  <th>数据</th>
+                  <th>总评</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Germany</td>
+                  <td>高</td>
+                  <td>高</td>
+                  <td>高</td>
+                  <td>中-高</td>
+                  <td>高</td>
+                  <td>Top-tier（优先）</td>
+                </tr>
+                <tr>
+                  <td>Romania</td>
+                  <td>高</td>
+                  <td>高</td>
+                  <td>高</td>
+                  <td>中</td>
+                  <td>中-高</td>
+                  <td>Top-tier（优先）</td>
+                </tr>
+                <tr>
+                  <td>Poland</td>
+                  <td>中-高</td>
+                  <td>中-高</td>
+                  <td>中-高</td>
+                  <td>中</td>
+                  <td>中</td>
+                  <td>Top-tier（优先）</td>
+                </tr>
+                <tr>
+                  <td>Spain</td>
+                  <td>高</td>
+                  <td>中-高</td>
+                  <td>中</td>
+                  <td>中-高</td>
+                  <td>高</td>
+                  <td>中（需验证）</td>
+                </tr>
+                <tr>
+                  <td>Baltic States</td>
+                  <td>中-高</td>
+                  <td>中</td>
+                  <td>中-高</td>
+                  <td>中</td>
+                  <td>高</td>
+                  <td>中（利基/选择性）</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="footer-note">提示：Top-tier 并非“完全同质”，而是“同优先级投入深挖资源”。</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>KPI + 风险监控</h2>
+        </div>
+        <div class="panel-body">
+          <div class="task-list" id="riskList"></div>
+          <p class="footer-note">建议每次组会前先看本栏，把“预警指标”当成清单逐条过一遍。</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "ims-dashboard-v1";
+
+    const steps = [
+      {
+        id: "s1",
+        label: "Step 1",
+        title: "问题定义",
+        focus: "明确客户目标、约束、成功标准",
+        tasks: [
+          "完成 Problem definition（1页）",
+          "写清 Scope / Constraints / Success criteria",
+          "确认关键决策问题（国家、客户、服务包、平台、商业化）"
+        ]
+      },
+      {
+        id: "s2",
+        label: "Step 2",
+        title: "国家筛选",
+        focus: "快筛+统一评分+证据链",
+        tasks: [
+          "完成五国快筛表（High / Medium / Low）",
+          "建立统一 Scorecard（权重 + 1-5分）",
+          "补齐 Evidence ID + 链接审计链"
+        ]
+      },
+      {
+        id: "s3",
+        label: "Step 3",
+        title: "市场组合选择",
+        focus: "Top-tier 组合与排除逻辑",
+        tasks: [
+          "明确 Germany / Romania / Poland 同优先级",
+          "写清 Why not Spain",
+          "写清 Why not Baltic States"
+        ]
+      },
+      {
+        id: "s4",
+        label: "Step 4",
+        title: "行业理解",
+        focus: "价值链 + 收益栈 + 门槛",
+        tasks: [
+          "产出 Value Chain Map",
+          "产出 Revenue Stack Table（前提/风险/服务映射）",
+          "把 barrier 写成咨询可交付物（Tech DD / Grid readiness / Bankability）"
+        ]
+      },
+      {
+        id: "s5",
+        label: "Step 5",
+        title: "客户分析",
+        focus: "Persona + Buying Journey + Trigger",
+        tasks: [
+          "完成 Developer 与 Investor 两类 persona",
+          "写清 buyer roles 与 cheque signer",
+          "完成 Trigger -> Deliverable -> Value 映射"
+        ]
+      },
+      {
+        id: "s6",
+        label: "Step 6",
+        title: "进入策略",
+        focus: "GTM + Offer + 90天行动",
+        tasks: [
+          "定义 Pack A/B/C 交付边界与报价逻辑",
+          "设定漏斗指标（MQL/SQL/Proposal/Won/Repeat）",
+          "完成资源配置与 90 天计划"
+        ]
+      },
+      {
+        id: "s7",
+        label: "Step 7",
+        title: "数字平台",
+        focus: "筛选器MVP与四模块",
+        tasks: [
+          "定义 Feasibility / Vendor / Compliance / Revenue 四模块",
+          "输出 MVP -> Phase2 -> Phase3 路线",
+          "补齐 Data Source Map（模块×国家×来源×用途）"
+        ]
+      },
+      {
+        id: "s8",
+        label: "Step 8",
+        title: "盈利模式",
+        focus: "Pricing + Funnel + Financial Feasibility",
+        tasks: [
+          "设计三层定价（Platform / Discovery / Project+Retainer）",
+          "完成 funnel 转化逻辑与关键指标",
+          "完成敏感性分析与 Break-even 说明"
+        ]
+      },
+      {
+        id: "s9",
+        label: "Step 9",
+        title: "实施与建议",
+        focus: "路线图 + KPI + 风险预警",
+        tasks: [
+          "完成 0-90天 / 3-12月 / 12月+ 路线图",
+          "完成 KPI Dashboard（增长、交付质量、财务健康）",
+          "完成 Risk register（风险×预警×缓释）"
+        ]
+      }
+    ];
+
+    const sprintPhases = [
+      {
+        id: "p1",
+        title: "Days 1-30 · Build",
+        goal: "准备期：先搭可复用资产",
+        tasks: [
+          "三国目标客户名单（每国10个）",
+          "Pack A/B 模板化（模型+清单+证据附件）",
+          "发布1份对外洞察作为获客素材"
+        ]
+      },
+      {
+        id: "p2",
+        title: "Days 31-60 · Pilot",
+        goal: "试点期：快速拿付费验证",
+        tasks: [
+          "完成 6-10 次 discovery calls",
+          "转化 2 个 Paid Discovery",
+          "沉淀 FAQ 与数据缺口库"
+        ]
+      },
+      {
+        id: "p3",
+        title: "Days 61-90 · Scale",
+        goal: "放大期：形成高价值与复购",
+        tasks: [
+          "至少1个 Pack A 升级为 Pack B",
+          "建立 1-2 个合作伙伴互导",
+          "确定 Retainer 服务范围与报价"
+        ]
+      }
+    ];
+
+    const riskItems = [
+      "线索多但质量低：关注 SQL/MQL 比例与 Discovery 转化率",
+      "项目交付周期过长：关注延期率与返工率",
+      "证据不可审计：检查 Evidence ID + 链接完整度",
+      "政策机制变化快：建立监管 tracker 并月度更新",
+      "三国并行分散：统一模板，国家差异参数化"
+    ];
+
+    const state = loadState();
+
+    function loadState() {
+      try {
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        return {
+          checked: data.checked || {},
+          hideDone: data.hideDone || false
+        };
+      } catch {
+        return { checked: {}, hideDone: false };
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function taskId(groupId, idx) {
+      return `${groupId}-t${idx + 1}`;
+    }
+
+    function render() {
+      renderSteps();
+      renderSprint();
+      renderRisk();
+      bindTopButtons();
+      syncHideDone();
+      updateProgress();
+    }
+
+    function renderSteps() {
+      const container = document.getElementById("stepsContainer");
+      container.innerHTML = "";
+
+      steps.forEach((step) => {
+        const card = document.createElement("article");
+        card.className = "step-card";
+        card.dataset.stepId = step.id;
+
+        const title = document.createElement("div");
+        title.className = "step-title";
+        title.innerHTML = `
+          <span class="badge">${step.label}</span>
+          <div>
+            <h3>${step.title}</h3>
+            <p class="step-info">${step.focus}</p>
+          </div>
+        `;
+
+        const progress = document.createElement("div");
+        progress.className = "mini-progress";
+        progress.innerHTML = `<span id="mini-${step.id}"></span>`;
+
+        const list = document.createElement("div");
+        list.className = "task-list";
+
+        step.tasks.forEach((text, idx) => {
+          const id = taskId(step.id, idx);
+          const row = document.createElement("label");
+          row.className = "task";
+          row.dataset.taskId = id;
+          row.innerHTML = `
+            <input type="checkbox" ${state.checked[id] ? "checked" : ""} />
+            <span>${text}</span>
+          `;
+          const input = row.querySelector("input");
+          input.addEventListener("change", () => {
+            state.checked[id] = input.checked;
+            saveState();
+            updateProgress(step.id);
+          });
+          list.appendChild(row);
+        });
+
+        card.appendChild(title);
+        card.appendChild(progress);
+        card.appendChild(list);
+        container.appendChild(card);
+      });
+    }
+
+    function renderSprint() {
+      const container = document.getElementById("sprintContainer");
+      container.innerHTML = "";
+
+      sprintPhases.forEach((phase) => {
+        const block = document.createElement("article");
+        block.className = "phase";
+        block.dataset.phaseId = phase.id;
+
+        const title = document.createElement("h3");
+        title.textContent = phase.title;
+
+        const desc = document.createElement("p");
+        desc.textContent = phase.goal;
+
+        const list = document.createElement("div");
+        list.className = "task-list";
+
+        phase.tasks.forEach((text, idx) => {
+          const id = taskId(phase.id, idx);
+          const row = document.createElement("label");
+          row.className = "task";
+          row.dataset.taskId = id;
+          row.innerHTML = `
+            <input type="checkbox" ${state.checked[id] ? "checked" : ""} />
+            <span>${text}</span>
+          `;
+          const input = row.querySelector("input");
+          input.addEventListener("change", () => {
+            state.checked[id] = input.checked;
+            saveState();
+            updateProgress();
+          });
+          list.appendChild(row);
+        });
+
+        block.appendChild(title);
+        block.appendChild(desc);
+        block.appendChild(list);
+        container.appendChild(block);
+      });
+    }
+
+    function renderRisk() {
+      const list = document.getElementById("riskList");
+      list.innerHTML = "";
+      riskItems.forEach((text, idx) => {
+        const id = taskId("risk", idx);
+        const row = document.createElement("label");
+        row.className = "task";
+        row.dataset.taskId = id;
+        row.innerHTML = `
+          <input type="checkbox" ${state.checked[id] ? "checked" : ""} />
+          <span>${text}</span>
+        `;
+        row.querySelector("input").addEventListener("change", (e) => {
+          state.checked[id] = e.target.checked;
+          saveState();
+          updateProgress();
+        });
+        list.appendChild(row);
+      });
+    }
+
+    function bindTopButtons() {
+      const toggleBtn = document.getElementById("toggleDoneBtn");
+      const exportBtn = document.getElementById("exportBtn");
+      const resetBtn = document.getElementById("resetBtn");
+
+      toggleBtn.onclick = () => {
+        state.hideDone = !state.hideDone;
+        saveState();
+        syncHideDone();
+      };
+
+      exportBtn.onclick = exportWeeklySummary;
+
+      resetBtn.onclick = () => {
+        if (!confirm("确认清空所有勾选状态吗？")) return;
+        state.checked = {};
+        saveState();
+        render();
+      };
+    }
+
+    function syncHideDone() {
+      const root = document.getElementById("pageRoot");
+      const btn = document.getElementById("toggleDoneBtn");
+      if (state.hideDone) {
+        root.classList.add("hidden-done");
+        btn.textContent = "显示全部";
+      } else {
+        root.classList.remove("hidden-done");
+        btn.textContent = "只看未完成";
+      }
+    }
+
+    function getAllTaskNodes() {
+      return Array.from(document.querySelectorAll(".task"));
+    }
+
+    function updateProgress(stepJustCompleted = null) {
+      const allTasks = getAllTaskNodes();
+      const total = allTasks.length;
+      let done = 0;
+      allTasks.forEach((node) => {
+        const input = node.querySelector("input");
+        const isDone = input.checked;
+        node.classList.toggle("done", isDone);
+        if (isDone) done += 1;
+      });
+
+      const percent = total ? Math.round((done / total) * 100) : 0;
+      document.getElementById("doneCount").textContent = done;
+      document.getElementById("totalCount").textContent = total;
+      document.getElementById("overallPercent").textContent = `${percent}%`;
+      document.getElementById("overallBar").style.width = `${percent}%`;
+
+      let doneSteps = 0;
+      steps.forEach((step) => {
+        const ids = step.tasks.map((_, idx) => taskId(step.id, idx));
+        const hit = ids.filter((id) => state.checked[id]).length;
+        const stepPercent = Math.round((hit / ids.length) * 100);
+        const mini = document.getElementById(`mini-${step.id}`);
+        if (mini) mini.style.width = `${stepPercent}%`;
+
+        const card = document.querySelector(`[data-step-id="${step.id}"]`);
+        if (card) {
+          const wasDone = card.classList.contains("done");
+          const nowDone = stepPercent === 100;
+          card.classList.toggle("done", nowDone);
+          if (!wasDone && nowDone && step.id === stepJustCompleted) {
+            card.classList.add("flash");
+            setTimeout(() => card.classList.remove("flash"), 850);
+          }
+        }
+
+        if (stepPercent === 100) doneSteps += 1;
+      });
+
+      document.getElementById("doneSteps").textContent = `${doneSteps} / ${steps.length}`;
+
+      const sprintIds = sprintPhases.flatMap((phase) => phase.tasks.map((_, idx) => taskId(phase.id, idx)));
+      const sprintDone = sprintIds.filter((id) => state.checked[id]).length;
+      const sprintPercent = Math.round((sprintDone / sprintIds.length) * 100);
+      document.getElementById("sprintPercent").textContent = `${sprintPercent}%`;
+
+      const countryKeys = ["s2-t2", "s2-t3", "s3-t1", "s3-t2", "s3-t3"];
+      const countryDone = countryKeys.filter((id) => state.checked[id]).length;
+      const countryReady = Math.round((countryDone / countryKeys.length) * 100);
+      document.getElementById("countryReady").textContent = `${countryReady}%`;
+
+      updateNextAction();
+      updateMilestone(percent, doneSteps);
+    }
+
+    function updateNextAction() {
+      const nextTitle = document.getElementById("nextActionTitle");
+      const nextBody = document.getElementById("nextActionBody");
+
+      const orderedTasks = [];
+      steps.forEach((step) => {
+        step.tasks.forEach((text, idx) => {
+          orderedTasks.push({
+            id: taskId(step.id, idx),
+            step: step.label,
+            title: step.title,
+            text
+          });
+        });
+      });
+      sprintPhases.forEach((phase) => {
+        phase.tasks.forEach((text, idx) => {
+          orderedTasks.push({
+            id: taskId(phase.id, idx),
+            step: phase.title,
+            title: "90天冲刺",
+            text
+          });
+        });
+      });
+
+      const next = orderedTasks.find((task) => !state.checked[task.id]);
+      if (!next) {
+        nextTitle.textContent = "全部任务已完成";
+        nextBody.textContent = "可以开始把最终版本转成展示稿，并准备答辩分工。";
+        return;
+      }
+
+      nextTitle.textContent = `${next.step} · ${next.title}`;
+      nextBody.textContent = next.text;
+    }
+
+    function updateMilestone(percent, doneSteps) {
+      const box = document.getElementById("milestoneBox");
+      box.className = "milestone";
+      if (doneSteps >= 7) {
+        box.classList.add("good");
+        box.textContent = "里程碑：已进入冲刺收尾区（>=7个Step完成），优先做交付质量和证据链完整性。";
+      } else if (percent >= 45) {
+        box.classList.add("warn");
+        box.textContent = "里程碑：进度过半，下一阶段重点是 Step 7-9 的平台、盈利与实施闭环。";
+      } else {
+        box.classList.add("risk");
+        box.textContent = "里程碑：当前仍在前半段，请优先完成 Step 1-3，避免后续战略部分失去依据。";
+      }
+    }
+
+    function exportWeeklySummary() {
+      const lines = [];
+      lines.push("# IMS 项目周进展");
+      lines.push("");
+      lines.push(`- 总完成度：${document.getElementById("overallPercent").textContent}`);
+      lines.push(`- 完成任务：${document.getElementById("doneCount").textContent}/${document.getElementById("totalCount").textContent}`);
+      lines.push(`- 完成Step：${document.getElementById("doneSteps").textContent}`);
+      lines.push("");
+      lines.push("## 已完成");
+
+      const doneTasks = Array.from(document.querySelectorAll(".task.done span")).map((el) => el.textContent.trim());
+      if (doneTasks.length === 0) {
+        lines.push("- （暂无）");
+      } else {
+        doneTasks.forEach((t) => lines.push(`- ${t}`));
+      }
+
+      lines.push("");
+      lines.push("## 下周优先");
+      const nextTasks = Array.from(document.querySelectorAll(".task:not(.done) span")).slice(0, 5).map((el) => el.textContent.trim());
+      if (nextTasks.length === 0) {
+        lines.push("- 进入答辩与展示准备");
+      } else {
+        nextTasks.forEach((t) => lines.push(`- ${t}`));
+      }
+
+      const text = lines.join("\n");
+      navigator.clipboard.writeText(text).then(() => {
+        alert("本周进展已复制到剪贴板，可直接发到群里。");
+      }).catch(() => {
+        prompt("复制下面的进展文本：", text);
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
