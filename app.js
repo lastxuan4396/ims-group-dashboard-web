@@ -938,6 +938,22 @@
   function applyTaskFilters() {
     const filter = uiState.assigneeFilter;
     const myName = uiState.currentMember;
+    let effectiveFilter = filter;
+
+    if (effectiveFilter === "me" && !myName) {
+      effectiveFilter = "all";
+    } else if (effectiveFilter.startsWith("member:")) {
+      const target = effectiveFilter.slice("member:".length);
+      if (!sharedState.members.includes(target)) {
+        effectiveFilter = "all";
+      }
+    }
+
+    if (effectiveFilter !== uiState.assigneeFilter) {
+      uiState.assigneeFilter = effectiveFilter;
+      saveUiState();
+      refreshAssigneeFilterOptions();
+    }
 
     document.querySelectorAll(".task").forEach((row) => {
       const status = row.dataset.status || "todo";
@@ -947,10 +963,10 @@
 
       if (uiState.hideDone && status === "done") visible = false;
 
-      if (filter === "me") {
+      if (effectiveFilter === "me") {
         visible = visible && Boolean(myName) && assignee === myName;
-      } else if (filter.startsWith("member:")) {
-        const target = filter.slice("member:".length);
+      } else if (effectiveFilter.startsWith("member:")) {
+        const target = effectiveFilter.slice("member:".length);
         visible = visible && assignee === target;
       }
 
