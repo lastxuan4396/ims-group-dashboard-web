@@ -1,10 +1,7 @@
 services:
   - type: web
-    name: ims-group-dashboard-web
+    name: ims-group-dashboard-realtime
     runtime: node
     plan: free
-    buildCommand: npm install
-    startCommand: npm start
-    envVars:
-      - key: DATABASE_URL
-        sync: false
+    buildCommand: "echo no-build"
+    startCommand: node server.js

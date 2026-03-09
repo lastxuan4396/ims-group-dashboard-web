@@ -1,6 +1,6 @@
 {
   "name": "ims-group-dashboard-web",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Realtime IMS group project dashboard",
   "main": "server.js",
@@ -9,10 +9,5 @@
   },
   "engines": {
     "node": ">=18"
-  },
-  "dependencies": {
-    "express": "^4.21.2",
-    "pg": "^8.14.1",
-    "socket.io": "^4.8.1"
   }
 }

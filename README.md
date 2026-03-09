@@ -4,25 +4,21 @@ A realtime collaborative dashboard for your IMS project.
 
 ## Features
 
-- Shared checkbox progress across all users.
-- Realtime sync (Socket.IO): updates appear instantly for everyone.
-- Per-task assignee field (name input) synced to all users.
-- Persisted state in Postgres when `DATABASE_URL` is set.
-- File fallback (`data/shared-state.json`) when database is unavailable.
+- Shared progress across all users (status, priority, due date, assignee).
+- Realtime updates with Server-Sent Events (SSE).
+- Per-task assignee with standardized member list.
+- Operation log with one-step undo.
+- Filters: by assignee, by current week due date, and unfinished-only.
 
 ## Run locally
 
 ```bash
-npm install
 npm start
 ```
 
 Open [http://localhost:10000](http://localhost:10000).
 
-## Deploy on Render
+## Persistence
 
-Use a **Web Service** with:
-
-- Build Command: `npm install`
-- Start Command: `npm start`
-- Env var: `DATABASE_URL` (recommended, for durable shared state)
+- State is persisted to `data/shared-state.json`.
+- If deployed to Render, this persists while the instance remains active.
