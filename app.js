@@ -339,6 +339,15 @@
   const taskDefMap = getTaskDefMap();
   ensureKnownTasks();
 
+  function getStepDisplayLabel(step) {
+    const title = String(step?.title || "");
+    const match = title.match(/^(\d+)\./);
+    if (match) return `章 ${match[1]}`;
+    if (/Executive Summary/i.test(title)) return "摘要";
+    if (/Conclusion/i.test(title)) return "结论";
+    return step?.label || "章节";
+  }
+
   function ensureKnownTasks() {
     Object.keys(taskDefMap).forEach((id) => {
       if (!sharedState.tasks[id]) {
@@ -401,6 +410,14 @@
 
     const main = document.createElement("div");
     main.className = "task-main";
+    const indexMatch = String(text).match(/^(\d+(?:\.\d+)*)\s+(.+)$/);
+    if (indexMatch) {
+      const indexChip = document.createElement("span");
+      indexChip.className = "task-index";
+      indexChip.textContent = indexMatch[1];
+      main.appendChild(indexChip);
+      text = indexMatch[2];
+    }
     const label = document.createElement("span");
     label.className = "task-label";
     label.textContent = text;
@@ -470,15 +487,17 @@
       const card = document.createElement("article");
       card.className = "step-card";
       card.dataset.stepId = step.id;
+      const displayLabel = getStepDisplayLabel(step);
 
       const title = document.createElement("div");
       title.className = "step-title";
       title.innerHTML = `
-        <span class="badge">${step.label}</span>
+        <span class="badge">${displayLabel}</span>
         <div>
           <h3>${step.title}</h3>
           <p class="step-info">${step.focus}</p>
         </div>
+        <span class="step-meta">${step.tasks.length} 项</span>
       `;
 
       const progress = document.createElement("div");
@@ -717,7 +736,7 @@
       step.tasks.forEach((text, idx) => {
         ordered.push({
           id: taskId(step.id, idx),
-          step: step.label,
+          step: getStepDisplayLabel(step),
           stepId: step.id,
           title: step.title,
           text
