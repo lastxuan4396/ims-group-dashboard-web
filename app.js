@@ -457,6 +457,7 @@
     renderRisk();
     bindTopButtons();
     bindCollabControls();
+    bindStarterActions();
     syncAllUiFromState();
     connectRealtime();
   }
@@ -710,6 +711,118 @@
     });
   }
 
+  function getOrderedTaskItems() {
+    const ordered = [];
+    steps.forEach((step) => {
+      step.tasks.forEach((text, idx) => {
+        ordered.push({
+          id: taskId(step.id, idx),
+          step: step.label,
+          stepId: step.id,
+          title: step.title,
+          text
+        });
+      });
+    });
+    sprintPhases.forEach((phase) => {
+      phase.tasks.forEach((text, idx) => {
+        ordered.push({
+          id: taskId(phase.id, idx),
+          step: phase.title,
+          stepId: phase.id,
+          title: "90天运营计划",
+          text
+        });
+      });
+    });
+    return ordered;
+  }
+
+  function pickNextTask(preferUnassigned = false) {
+    const ordered = getOrderedTaskItems();
+    if (preferUnassigned) {
+      const unassigned = ordered.find((item) => {
+        const task = getTask(item.id);
+        return !isDoneTask(task) && !sanitizeName(task.assignee || "");
+      });
+      if (unassigned) return unassigned;
+    }
+    return ordered.find((item) => !isDoneTask(getTask(item.id))) || null;
+  }
+
+  function getUpcomingFriday() {
+    const now = new Date();
+    const day = now.getDay();
+    let delta = 5 - day;
+    if (delta < 0) delta += 7;
+    const due = new Date(now);
+    due.setHours(0, 0, 0, 0);
+    due.setDate(now.getDate() + delta);
+    return due.toISOString().slice(0, 10);
+  }
+
+  function scrollToTask(taskIdValue) {
+    const row = document.querySelector(`.task[data-task-id='${taskIdValue}']`);
+    if (!row) return;
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+    row.classList.add("flash");
+    setTimeout(() => row.classList.remove("flash"), 700);
+  }
+
+  function bindStarterActions() {
+    const claimBtn = document.getElementById("claimFirstTaskBtn");
+    const dueBtn = document.getElementById("setWeekDueBtn");
+    const focusMemberBtn = document.getElementById("focusMemberBtn");
+    if (!claimBtn || !dueBtn || !focusMemberBtn) return;
+
+    focusMemberBtn.addEventListener("click", () => {
+      const input = document.getElementById("memberInput");
+      input?.focus();
+      input?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+
+    claimBtn.addEventListener("click", () => {
+      const me = sanitizeName(uiState.currentMember || "");
+      if (!me) {
+        alert("请先在“我是谁”里选择自己，再领取任务。");
+        document.getElementById("currentMemberSelect")?.focus();
+        return;
+      }
+
+      const next = pickNextTask(true);
+      if (!next) {
+        alert("当前没有可领取的未完成任务。");
+        return;
+      }
+
+      const task = getTask(next.id);
+      const changes = {};
+      if (task.status === "todo") changes.status = "doing";
+      if (!sanitizeName(task.assignee || "")) changes.assignee = me;
+
+      if (Object.keys(changes).length) {
+        handleTaskFieldChange(next.id, changes, next.stepId);
+      }
+      scrollToTask(next.id);
+    });
+
+    dueBtn.addEventListener("click", () => {
+      const target = getOrderedTaskItems().find((item) => {
+        const task = getTask(item.id);
+        return !isDoneTask(task) && !sanitizeDueDate(task.dueDate || "");
+      }) || pickNextTask(false);
+
+      if (!target) {
+        alert("当前没有可设置截止日的未完成任务。");
+        return;
+      }
+
+      const dueDate = getUpcomingFriday();
+      handleTaskFieldChange(target.id, { dueDate }, target.stepId);
+      scrollToTask(target.id);
+    });
+  }
+
   async function postJson(url, payload) {
     const response = await fetch(url, {
       method: "POST",
@@ -780,19 +893,74 @@
     syncAllUiFromState();
   }
 
+  function hasStateData(state) {
+    const normalized = normalizeSharedState(state);
+    if (normalized.members.length > 0) return true;
+    if (normalized.history.length > 0) return true;
+    return Object.values(normalized.tasks).some((task) => {
+      const item = normalizeTask(task);
+      return item.status !== "todo"
+        || item.priority !== "medium"
+        || Boolean(item.dueDate)
+        || Boolean(item.assignee);
+    });
+  }
+
+  async function syncStateOnConnect(serverRawState) {
+    const serverState = normalizeSharedState(serverRawState || {});
+    const localState = normalizeSharedState(sharedState);
+    const serverHasData = hasStateData(serverState);
+    const localHasData = hasStateData(localState);
+
+    if (!serverHasData && localHasData) {
+      const restorePayload = {
+        tasks: localState.tasks,
+        members: localState.members,
+        actor: getActor()
+      };
+
+      try {
+        const restored = await sendEventNow("state:replace", restorePayload);
+        if (restored && restored.state) {
+          replaceSharedState(restored.state);
+        } else {
+          replaceSharedState(localState);
+        }
+        setSyncStatus(true, "实时同步在线（已自动保留历史数据）");
+        await flushPending();
+        return;
+      } catch {
+        pendingMessages.push({ event: "state:replace", payload: restorePayload });
+        syncConnected = false;
+        setSyncStatus(false, "离线（历史数据待同步）");
+        return;
+      }
+    }
+
+    replaceSharedState(serverState);
+    await flushPending();
+  }
+
   function connectRealtime() {
     eventSource = new EventSource("/events");
+    let bootstrapCompleted = false;
 
-    eventSource.onopen = () => {
+    eventSource.onopen = async () => {
       syncConnected = true;
       setSyncStatus(true, "实时同步在线");
-      fetch("/api/state").then((res) => res.json()).then((payload) => {
-        if (payload && payload.state) replaceSharedState(payload.state);
-        flushPending();
-      }).catch(() => {});
+      try {
+        const response = await fetch("/api/state");
+        const payload = await response.json();
+        await syncStateOnConnect(payload?.state);
+      } catch {
+        // ignore
+      } finally {
+        bootstrapCompleted = true;
+      }
     };
 
     eventSource.onmessage = (event) => {
+      if (!bootstrapCompleted) return;
       try {
         const payload = JSON.parse(event.data);
         if (payload && payload.state) {
@@ -1091,30 +1259,30 @@
   function updateNextAction() {
     const nextTitle = document.getElementById("nextActionTitle");
     const nextBody = document.getElementById("nextActionBody");
-
-    const ordered = [];
-    steps.forEach((step) => {
-      step.tasks.forEach((text, idx) => {
-        ordered.push({ id: taskId(step.id, idx), step: step.label, title: step.title, text });
-      });
-    });
-    sprintPhases.forEach((phase) => {
-      phase.tasks.forEach((text, idx) => {
-        ordered.push({ id: taskId(phase.id, idx), step: phase.title, title: "90天冲刺", text });
-      });
-    });
+    const starterWrap = document.getElementById("starterWrap");
+    const ordered = getOrderedTaskItems();
+    const doneCount = ordered.filter((item) => isDoneTask(getTask(item.id))).length;
 
     const next = ordered.find((item) => !isDoneTask(getTask(item.id)));
     if (!next) {
       nextTitle.textContent = "全部主线任务已完成";
       nextBody.textContent = "你们可以进入最终答辩材料排版与角色演练。";
+      if (starterWrap) starterWrap.style.display = "none";
       return;
+    }
+
+    if (starterWrap) {
+      starterWrap.style.display = doneCount === 0 ? "grid" : "none";
     }
 
     const task = getTask(next.id);
     const owner = task.assignee ? `（负责人：${task.assignee}）` : "";
-    nextTitle.textContent = `${next.step} · ${next.title}`;
-    nextBody.textContent = `${next.text}${owner}`;
+    nextTitle.textContent = doneCount === 0
+      ? `启动动作：${next.step} · ${next.title}`
+      : `${next.step} · ${next.title}`;
+    nextBody.textContent = doneCount === 0
+      ? `先完成「${next.text}」${owner}。你可以直接用下方按钮一键领取和设置截止日。`
+      : `${next.text}${owner}`;
   }
 
   function updateMilestone(percent, doneSteps) {

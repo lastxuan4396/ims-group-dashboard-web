@@ -576,6 +576,25 @@
       color: #2b4136;
     }
 
+    .starter-wrap {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #cfe0d5;
+      display: grid;
+      gap: 8px;
+    }
+
+    .starter-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .starter-tip {
+      font-size: 0.84rem;
+      color: #496357;
+    }
+
     .kpi {
       display: grid;
       gap: 9px;
@@ -908,7 +927,15 @@
           <div class="panel-body">
             <article class="next-action">
               <h3 id="nextActionTitle">待生成</h3>
-              <p id="nextActionBody">先勾选至少一项任务，系统会给出最小可执行下一步。</p>
+              <p id="nextActionBody">无需先勾选。先添加成员并选择“我是谁”，然后领取首个任务即可启动。</p>
+              <div class="starter-wrap" id="starterWrap">
+                <div class="starter-actions">
+                  <button class="btn-main" id="claimFirstTaskBtn" type="button">领取首个任务</button>
+                  <button class="btn-lite" id="setWeekDueBtn" type="button">设为本周截止</button>
+                  <button class="btn-lite" id="focusMemberBtn" type="button">先添加成员</button>
+                </div>
+                <p class="starter-tip">建议顺序：添加成员 → 领取首个任务 → 设置本周截止日。</p>
+              </div>
             </article>
             <div class="kpi">
               <div class="kpi-item"><span>完成章节数</span><strong id="doneSteps">0 / 8</strong></div>
