@@ -475,6 +475,7 @@
     bindTopButtons();
     bindCollabControls();
     bindStarterActions();
+    bindDataBackupControls();
     syncAllUiFromState();
     connectRealtime();
   }
@@ -839,6 +840,70 @@
       const dueDate = getUpcomingFriday();
       handleTaskFieldChange(target.id, { dueDate }, target.stepId);
       scrollToTask(target.id);
+    });
+  }
+
+  function downloadJsonFile(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function bindDataBackupControls() {
+    const exportBtn = document.getElementById("exportDataBtn");
+    const importBtn = document.getElementById("importDataBtn");
+    const fileInput = document.getElementById("importDataInput");
+    if (!exportBtn || !importBtn || !fileInput) return;
+
+    exportBtn.addEventListener("click", () => {
+      const now = new Date();
+      const stamp = now.toISOString().slice(0, 10);
+      const snapshot = {
+        version: 1,
+        exportedAt: now.toISOString(),
+        state: {
+          tasks: sharedState.tasks,
+          members: sharedState.members,
+          history: sharedState.history,
+          updatedAt: sharedState.updatedAt
+        }
+      };
+      downloadJsonFile(snapshot, `ims-dashboard-backup-${stamp}.json`);
+    });
+
+    importBtn.addEventListener("click", () => fileInput.click());
+
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        const raw = parsed && typeof parsed === "object" && parsed.state ? parsed.state : parsed;
+        const normalized = normalizeSharedState(raw);
+        if (!hasStateData(normalized)) {
+          alert("导入失败：备份里没有可恢复的数据。");
+          return;
+        }
+
+        replaceSharedState(normalized);
+        emitSocket("state:replace", {
+          tasks: normalized.tasks,
+          members: normalized.members,
+          actor: getActor()
+        });
+        alert("已导入并同步协作数据。");
+      } catch {
+        alert("导入失败：请确认选择的是本系统导出的 JSON 文件。");
+      } finally {
+        fileInput.value = "";
+      }
     });
   }
 

@@ -544,6 +544,13 @@
       margin-top: 10px;
     }
 
+    .backup-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
     .member-list {
       display: flex;
       flex-wrap: wrap;
@@ -993,6 +1000,11 @@
             <div class="member-add">
               <input id="memberInput" class="field-input" placeholder="添加成员名字" />
               <button class="btn-lite" id="addMemberBtn">添加</button>
+            </div>
+            <div class="backup-actions">
+              <button class="btn-lite" id="exportDataBtn" type="button">导出协作数据</button>
+              <button class="btn-lite" id="importDataBtn" type="button">导入恢复数据</button>
+              <input id="importDataInput" type="file" accept="application/json" hidden />
             </div>
             <div class="member-list" id="memberList"></div>
             <p class="footer-note">说明：负责人只能从成员列表中选择，避免同一人出现多个名字版本。</p>
