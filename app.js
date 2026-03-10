@@ -20,107 +20,97 @@
       id: "s1",
       label: "Step 1",
       title: "Executive Summary",
-      focus: "一页讲清结论，不展开过程",
+      focus: "只写结论，不展开过程",
       tasks: [
-        "明确摘要结构：Blanboz是谁 / 为什么现在 / 为什么三国 / 商业模式 / 2-3年路径",
-        "输出一句核心主张：咨询服务为主，平台为增强器",
-        "完成 Executive Summary 终稿（可直接放在报告首页）"
+        "Blanboz是谁、当前提供什么价值",
+        "为什么现在值得进入欧洲 BESS 咨询市场",
+        "为什么优先 Germany / Romania / Poland",
+        "核心商业模式：咨询服务为主，平台为增强器",
+        "未来 2-3 年增长路径概览"
       ]
     },
     {
       id: "s2",
       label: "Step 2",
-      title: "The Opportunity",
-      focus: "定义机会，不展开战术细节",
+      title: "1. The Opportunity",
+      focus: "回答为什么现在值得做这门生意",
       tasks: [
-        "完成 Company overview（能力边界与当前价值）",
-        "写清 business problem（市场选择 / 并网许可 / 收益融资三类痛点）",
-        "完成 Why now（需求增长 + 机制复杂 + 不确定性上升）"
+        "1.1 Company overview",
+        "1.2 The business problem",
+        "1.3 Why now"
       ]
     },
     {
       id: "s3",
       label: "Step 3",
-      title: "Market Analysis",
-      focus: "讲清三国优先与组合逻辑",
+      title: "2. Market Analysis",
+      focus: "讲清为什么是 Germany / Romania / Poland",
       tasks: [
-        "完成五国筛选方法说明（初筛 + 统一评分 + 证据链）",
-        "写清 Germany / Romania / Poland 为同级 Top-tier 的理由",
-        "写清 Spain / Baltics 暂不优先（validation / niche）",
-        "输出 Portfolio rationale：DE anchor / RO窗口 / PL桥接"
+        "2.1 Country screening and market selection",
+        "2.2 Industry structure in the selected markets",
+        "2.3 Portfolio rationale"
       ]
     },
     {
       id: "s4",
       label: "Step 4",
-      title: "Marketing",
-      focus: "谁买、为什么买、怎么转化",
+      title: "3. Marketing",
+      focus: "谁会买、为什么买、怎么转成客户",
       tasks: [
-        "明确目标客户：开发商 + 投资人 / IPPs",
-        "完成 Buyer roles 决策链（sponsor / technical / finance / signer）",
-        "完成 Buying triggers -> Deliverable 映射",
-        "完成 Buying journey（signal -> paid discovery -> full advisory -> retainer）",
-        "完成 Pack A/B/C 产品化定义"
+        "3.1 Target customers",
+        "3.2 Buyer roles and decision chain",
+        "3.3 Buying triggers",
+        "3.4 Buying journey",
+        "3.5 Offer packaging"
       ]
     },
     {
       id: "s5",
       label: "Step 5",
-      title: "Operational Plan",
+      title: "4. Operational Plan",
       focus: "交付模式、能力配置、90天执行",
       tasks: [
-        "固化 delivery model：discovery -> project -> retainer",
-        "完成 capability model：内部能力与合作伙伴边界",
-        "完成 90-day operating plan：Build / Pilot / Scale",
-        "定义 platform optional 路径：先人工模板，后MVP决策"
+        "4.1 Delivery model",
+        "4.2 Capability model",
+        "4.3 90-day operating plan",
+        "4.4 Platform as an optional enabler"
       ]
     },
     {
       id: "s6",
       label: "Step 6",
-      title: "International Strategy",
+      title: "5. International Strategy",
       focus: "三国并行与复制扩张逻辑",
       tasks: [
-        "说明为什么采用 portfolio approach（而非单点进入）",
-        "定义三国角色：Germany anchor / Romania high-value / Poland bridge",
-        "写清 country-specific adaptation（服务、伙伴、数据源差异）",
-        "定义扩张逻辑：何时把 Spain / Baltics 纳入下一波"
+        "5.1 Why a portfolio approach",
+        "5.2 Country roles in the portfolio",
+        "5.3 Country-specific adaptation",
+        "5.4 Expansion logic"
       ]
     },
     {
       id: "s7",
       label: "Step 7",
-      title: "Financial Plan",
+      title: "6. Financial Plan",
       focus: "收入逻辑、假设、盈亏与情景",
       tasks: [
-        "明确 revenue model：Discovery fee / Project fee / Retainer",
-        "完成 pricing logic（固定价 / 项目价 / 月费）",
-        "锁定 key assumptions（价格 / 转化 / 产能 / 成本）",
-        "输出 3-year revenue outlook（按产品线）",
-        "完成 break-even + sensitivity",
-        "补 platform scenario：Base（无平台）vs Enhanced（MVP上线）"
+        "6.1 Revenue model",
+        "6.2 Pricing logic",
+        "6.3 Key assumptions",
+        "6.4 3-year revenue outlook",
+        "6.5 Break-even and sensitivity",
+        "6.6 Platform scenario note"
       ]
     },
     {
       id: "s8",
       label: "Step 8",
       title: "Conclusion & Next Steps",
-      focus: "战略结论 + 优先动作",
+      focus: "回到战略与执行层面收尾",
       tasks: [
-        "给出最终战略结论：为什么 DE / RO / PL 是当前最优组合",
-        "列出 3-5 个最优先动作（模板/试点/名单/伙伴）",
-        "给出平台决策点：先模板化筛选，验证后再启用MVP"
-      ]
-    },
-    {
-      id: "s9",
-      label: "Step 9",
-      title: "Final Assembly",
-      focus: "统稿、一致性与提交质量",
-      tasks: [
-        "完成章节衔接与逻辑一致性检查（避免重复或断层）",
-        "复核 Evidence IDs / 链接 / 图表编号",
-        "完成终稿排版与答辩版本同步"
+        "最终战略结论：为什么 Germany / Romania / Poland 是合理优先组合",
+        "当前最优先的 3-5 个动作（模板、试点、客户名单、合作伙伴）",
+        "平台决策点：先模板化筛选，或试点验证后启动 MVP"
       ]
     }
   ];
@@ -129,41 +119,41 @@
     {
       id: "p1",
       title: "Days 1-30 · Build",
-      goal: "准备期：建立可复用资产",
+      goal: "先建立可复用模板与目标名单",
       tasks: [
-        "完成交付模板包（收益模型/合规清单/证据附件）",
-        "建立三国目标客户名单 + 合作伙伴短名单",
-        "完成标准化 discovery 问卷与访谈脚本"
+        "完成收益模型、合规清单、证据附件模板",
+        "完成目标客户名单与优先联系清单",
+        "完成合作伙伴短名单（并网/工程/法律等）"
       ]
     },
     {
       id: "p2",
       title: "Days 31-60 · Pilot",
-      goal: "试点期：快速拿付费验证",
+      goal: "用 discovery 试点验证需求与转化",
       tasks: [
-        "完成 6-10 次 discovery calls",
-        "转化 2 个 Paid Discovery（Pack A）",
-        "沉淀 FAQ / 数据缺口库 / 常见风险模板"
+        "跑通 opportunity signal -> paid discovery 路径",
+        "形成首批付费诊断项目",
+        "沉淀线索质量、触发点与转化障碍"
       ]
     },
     {
       id: "p3",
       title: "Days 61-90 · Scale",
-      goal: "放大期：形成高价值与复购",
+      goal: "升级高价值项目并评估平台选项",
       tasks: [
-        "至少1个 Pack A 升级为 Pack B",
-        "建立 1-2 个合作伙伴互导机制",
-        "明确是否启动 MVP（以试点数据为依据）"
+        "把 discovery 升级为 project / retainer",
+        "建立稳定合作伙伴协作机制",
+        "根据试点结果决定是否启动 MVP"
       ]
     }
   ];
 
   const riskItems = [
-    "章节分工重叠：先锁定每章 owner，避免多人重复写作",
-    "证据链缺口：每个关键结论必须有 Evidence ID 与来源链接",
-    "财务假设不一致：统一 price / conversion / capacity 假设口径",
-    "过度依赖平台开发：坚持“无平台也能跑通”作为基线",
-    "三国深度不均衡：按 anchor/high-value/bridge 分配研究力度"
+    "把平台写成业务前提：偏离“可选增强器”的核心逻辑",
+    "国家组合被写成硬排序：丢失“三国同优先梯队”逻辑",
+    "客户链条写得过泛：缺少真实 buyer roles 与触发点",
+    "财务假设口径不统一：价格/转化/产能无法互相验证",
+    "章节衔接断层：market、marketing、operations 无闭环"
   ];
 
   let eventSource = null;
@@ -1089,7 +1079,7 @@
     const sprintPercent = Math.round((sprintDone / sprintIds.length) * 100);
     document.getElementById("sprintPercent").textContent = `${sprintPercent}%`;
 
-    const countryKeys = ["s3-t1", "s3-t2", "s3-t3", "s3-t4"];
+    const countryKeys = ["s3-t1", "s3-t2", "s3-t3"];
     const countryDone = countryKeys.filter((id) => isDoneTask(getTask(id))).length;
     const countryReady = Math.round((countryDone / countryKeys.length) * 100);
     document.getElementById("countryReady").textContent = `${countryReady}%`;
@@ -1130,10 +1120,13 @@
   function updateMilestone(percent, doneSteps) {
     const box = document.getElementById("milestoneBox");
     box.className = "milestone";
-    if (doneSteps >= 7) {
+    const totalSteps = steps.length;
+    const goodThreshold = Math.max(1, totalSteps - 1);
+    const warnThreshold = 45;
+    if (doneSteps >= goodThreshold) {
       box.classList.add("good");
-      box.textContent = "里程碑：已进入收尾冲刺区（>=7章完成），优先做证据链、财务口径与统稿一致性。";
-    } else if (percent >= 45) {
+      box.textContent = `里程碑：已进入收尾冲刺区（>=${goodThreshold}章完成），优先做证据链、财务口径与统稿一致性。`;
+    } else if (percent >= warnThreshold) {
       box.classList.add("warn");
       box.textContent = "里程碑：进度过半，下一阶段重点推进国际策略、财务计划与结论落地。";
     } else {
@@ -1243,7 +1236,7 @@
     lines.push("");
     lines.push(`- 总完成度：${document.getElementById("overallPercent").textContent}`);
     lines.push(`- 完成任务：${document.getElementById("doneCount").textContent}/${document.getElementById("totalCount").textContent}`);
-    lines.push(`- 完成Step：${document.getElementById("doneSteps").textContent}`);
+    lines.push(`- 完成章节：${document.getElementById("doneSteps").textContent}`);
     if (uiState.currentMember) lines.push(`- 汇报人：${uiState.currentMember}`);
     lines.push("");
     lines.push("## 已完成");
