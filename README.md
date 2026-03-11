@@ -22,3 +22,10 @@ Open [http://localhost:10000](http://localhost:10000).
 
 - State is persisted to `data/shared-state.json`.
 - If deployed to Render, this persists while the instance remains active.
+
+## GitHub Positioning
+
+- Suggested description: `Realtime collaborative project dashboard with SSE updates, task filters, and shared progress tracking.`
+- Suggested topics: `dashboard`, `project-management`, `nodejs`, `sse`, `javascript`, `realtime`
+- Metadata notes: see [`docs/repo-metadata.md`](docs/repo-metadata.md)
+
